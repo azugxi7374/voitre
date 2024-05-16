@@ -7,97 +7,13 @@
 </head>
 
 <body>
+    <!--
     <button onclick="prepareAudio()">音声取得</button>
     <button onclick="startMicTest()">録音開始</button>
     <button onclick="stopMicTest()">音声確認</button><br>
+    -->
     <audio id="playback_mictest" controls></audio>
+    <script src="./index.js"></script>
 </body>
-<script>
-    let audioStream = null;
-    let micTestStream = null;
-    let micTestRecorder = null;
-    let micBlobUrl = null;
-    let micTestChunks = [];
-
-    // TODO
-    const playbackMicTest = document.getElementById('playback_mictest');
-
-    async function prepareAudio() {
-        console.log(1)
-        if (!audioStream) {
-            console.log(2)
-            try {
-                audioStream = await navigator.mediaDevices.getUserMedia({
-                    video: false,
-                    audio: true
-                });
-                console.log(3)
-            } catch (error) { // error
-                // console.error('mediaDevice.getUserMedia() error:', error);
-                throw error;
-            }
-        } else {
-            // NOP
-        }
-    }
-
-
-    function startMicTest() {
-        if (!audioStream) {
-            // error
-            throw new Error("audioStream is not initialized")
-        }
-        micTestStream = new MediaStream();
-        micTestStream.addTrack(audioStream.getAudioTracks()[0]);
-        const micTestOptions = {
-            mimeType: 'audio/webm; codecs=opus'
-        };
-
-        // NOW /////////////////////////////////////////////
-
-        micTestRecorder = new MediaRecorder(micTestStream, micTestOptions);
-        micTestChunks = []; // 格納場所をクリア
-        // 一定間隔で録音が区切られて、データが渡される。
-        micTestRecorder.ondataavailable = function (evt) {
-            console.log("type=" + evt.data.type + " size=" + evt.data.size);
-            micTestChunks.push(evt.data);
-        };
-        micTestRecorder.start(1000);
-        console.log('start mic test');
-    }
-    // -- 音声の確認 --
-    function stopMicTest() {
-        if (micTestRecorder) {
-            console.log(4)
-            micTestRecorder.stop();
-            console.log("stop mic test");
-        }
-        console.log(5)
-        micTestRecorder.onstop = function (evt) {
-            console.log(6)
-            console.log('micTestRecorder.onstop(), so playback');
-            micTestRecorder = null;
-            playMicTest();
-        };
-
-        // マイクテスト再生
-        function playMicTest() {
-            // Blobの作成
-            const micTestBlob = new Blob(micTestChunks, { type: "audio/webm" });
-            // 再生できるようにURLを生成
-            micBlobUrl = window.URL.createObjectURL(micTestBlob);
-            if (micBlobUrl) {
-                playbackMicTest.src = micBlobUrl;
-                // 再生終了時
-                playbackMicTest.onended = function () {
-                    playbackMicTest.pause();
-                    playbackMicTest.src = "";
-                };
-                // 再生
-                playbackMicTest.play();
-            }
-        };
-    }
-</script>
 
 </html>
