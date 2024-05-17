@@ -1,15 +1,13 @@
 
 function audioControler() {
     let micRecorder = null;
-
-    let micTestChunks = [];
+    let micChunks = [];
 
     // TODO
     const playbackMicTest = document.getElementById('playback_mictest');
 
-    async function destroy() {
-        // TODO ???
-    }
+    // TODO ???
+    async function destroy() { }
 
     // fix. chunks
     async function createRecorder() {
@@ -20,20 +18,18 @@ function audioControler() {
             return micRecorder;
         } else {
 
-            const audioStream = await navigator.mediaDevices.getUserMedia({
-                video: false,
-                audio: true
-            });
+            const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-            const micTestStream = new MediaStream();
-            micTestStream.addTrack(audioStream.getAudioTracks()[0]);
+            // const micTestStream = new MediaStream();
+            // micTestStream.addTrack(audioStream.getAudioTracks()[0]);
 
-            micRecorder = new MediaRecorder(micTestStream, MIC_OPTIONS);
-            micTestChunks = [];
+            micRecorder = new MediaRecorder(audioStream, MIC_OPTIONS);
+            // micRecorder = new MediaRecorder(micTestStream, MIC_OPTIONS);
+            micChunks = [];
 
             micRecorder.ondataavailable = function (evt) {
                 console.log("type=" + evt.data.type + " size=" + evt.data.size);
-                micTestChunks.push(evt.data);
+                micChunks.push(evt.data);
             };
 
             micRecorder.onstop = function (evt) {
@@ -44,38 +40,19 @@ function audioControler() {
         }
     }
 
-    // function startRecording() {
-    //     micRecorder.start(1000);
-    //     console.log('start mic test');
-    // }
-
-    // function stopRecording() {
-    //     if (micRecorder) {
-    //         console.log(4)
-    //         micRecorder.stop();
-    //         console.log("stop mic test");
-    //     }
-    //     console.log(5)
-    //     micRecorder.onstop = function (evt) {
-    //         console.log(6)
-    //         console.log('micTestRecorder.onstop(), so playback');
-    //         micRecorder = null;
-    //         playMicTest();
-    //     };
-    // }
-
     // マイクテスト再生
+    // これはどちらかというとview
     function playMicTest(data, elem) {
         // Blobの作成
-        const micTestBlob = new Blob(data, { type: "audio/webm" });
+        const micBlob = new Blob(data, { type: "audio/webm" });
         // 再生できるようにURLを生成
-        const micBlobUrl = window.URL.createObjectURL(micTestBlob);
+        const micBlobUrl = window.URL.createObjectURL(micBlob);
         if (micBlobUrl) {
             elem.src = micBlobUrl;
             // 再生終了時
             elem.onended = function () {
                 elem.pause();
-                elem.src = "";
+                // elem.src = "";
             };
             // 再生
             elem.play();
@@ -86,7 +63,7 @@ function audioControler() {
         createRecorder,
         playMicTest,
         _getMicRecorder: () => micRecorder,
-        _getMicTestChunks: () => micTestChunks,
+        _getMicTestChunks: () => micChunks,
         _getPlaybackMicTest: () => playbackMicTest,
     }
 }
