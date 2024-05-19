@@ -103,7 +103,46 @@ async function sample2() {
     _CONTEXT.updateDataArray = upd
 }
 
+async function sample3() {
+    const MIC_OPTIONS = {
+        mimeType: 'audio/webm; codecs=opus'
+    };
+    if (!_audioStream) {
+        _audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
+    const micRecorder = new MediaRecorder(_audioStream, MIC_OPTIONS);
+    let micChunks = [];
 
+    micRecorder.ondataavailable = function (evt) {
+        console.log("type=" + evt.data.type + " size=" + evt.data.size);
+        micChunks.push(evt.data);
+    };
+
+    micRecorder.onstart = () => {
+        micChunks = [];
+    }
+    micRecorder.onstop = function (evt) {
+        // console.log(6)
+        // micRecorder = null;
+    }
+    _CONTEXT.recorder = micRecorder
+    _CONTEXT.data = micChunks
+}
+
+// memo
+// TODO
+async function sample4() {
+    // copied
+    await sample3()
+    let rdr = _CONTEXT.recorder
+    let rdata = _CONTEXT.data
+    rdr.start(1000)
+    // ↓[blob]
+    let ab = await rdata[0].arrayBuffer()
+    var audioCtx = new AudioContext()
+    var d = await audioCtx.decodeAudioData(ab)
+    d.getChannelData(0) // -> Float32Array
+}
 
 function audioControler() {
     let audioStream = null;
