@@ -144,6 +144,54 @@ async function sample4() {
     d.getChannelData(0) // -> Float32Array
 }
 
+async function sample5() {
+    const MIC_OPTIONS = {
+        mimeType: 'audio/webm; codecs=opus'
+    };
+    if (!_audioStream) {
+        _audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
+    const rdr = new MediaRecorder(_audioStream, MIC_OPTIONS);
+    // let micChunks = [];
+
+    var audioCtx = new AudioContext()
+    async function callback(blobData) {
+        let ab = await blobData.arrayBuffer()
+        var d = await audioCtx.decodeAudioData(ab)
+        const rms = calcRMS(d.getChannelData(0))
+        const db = rmsTodB(rms)
+    }
+    rdr.ondataavailable = (evt) => {
+        // console.log("type=" + evt.data.type + " size=" + evt.data.size);
+        // micChunks.push(evt.data);
+        callback(evt.data)
+    };
+
+    rdr.onstart = () => {
+        // micChunks = [];
+    }
+    rdr.onstop = function (evt) {
+        // console.log(6)
+        // micRecorder = null;
+    }
+
+    // TODO NOW
+    // rdr.start(1000)
+    // ↓[blob]
+}
+
+function calcRMS(channelData) {
+    let sum = 0;
+    for (let i = 0; i < channelData.length; i++) {
+        sum += channelData[i] * channelData[i];
+    }
+    return Math.sqrt(sum / channelData.length);
+}
+function rmsTodB(rms) {
+    return 20 * Math.log10(rms);
+}
+
+
 function audioControler() {
     let audioStream = null;
     let micRecorder = null;
