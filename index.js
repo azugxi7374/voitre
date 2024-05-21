@@ -119,7 +119,7 @@ async function sample3() {
     };
 
     micRecorder.onstart = () => {
-        micChunks = [];
+        // micChunks = [];
     }
     micRecorder.onstop = function (evt) {
         // console.log(6)
@@ -144,6 +144,7 @@ async function sample4() {
     d.getChannelData(0) // -> Float32Array
 }
 
+// ↓これだと失敗する。個別のblobを再生できないため。
 async function sample5() {
     const MIC_OPTIONS = {
         mimeType: 'audio/webm; codecs=opus'
@@ -152,19 +153,28 @@ async function sample5() {
         _audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     }
     const rdr = new MediaRecorder(_audioStream, MIC_OPTIONS);
-    // let micChunks = [];
+    let micChunks = [];
+    _CONTEXT.chunks = micChunks
 
-    var audioCtx = new AudioContext()
-    async function callback(blobData) {
+    // var audioCtx = new AudioContext()
+    async function recodeCallback(blobData) {
+        console.log({ blobData })
+        _CONTEXT.blobData = blobData
         let ab = await blobData.arrayBuffer()
+        console.log({ ab })
+        _CONTEXT.ab = ab
+        var audioCtx = new AudioContext()
         var d = await audioCtx.decodeAudioData(ab)
+        console.log({ d })
+        _CONTEXT.d = d
         const rms = calcRMS(d.getChannelData(0))
         const db = rmsTodB(rms)
+        console.log({ rms, db })
     }
     rdr.ondataavailable = (evt) => {
-        // console.log("type=" + evt.data.type + " size=" + evt.data.size);
-        // micChunks.push(evt.data);
-        callback(evt.data)
+        console.log("type=" + evt.data.type + " size=" + evt.data.size);
+        micChunks.push(evt.data);
+        recodeCallback(evt.data)
     };
 
     rdr.onstart = () => {
@@ -175,9 +185,13 @@ async function sample5() {
         // micRecorder = null;
     }
 
-    // TODO NOW
-    // rdr.start(1000)
+    rdr.start(10000)
     // ↓[blob]
+}
+
+// getByteTimeDomainDataを50ms?とかごとに呼び出して、非連続のスナップショットデータとして持つ案
+function sample6() {
+    // TODO
 }
 
 function calcRMS(channelData) {
