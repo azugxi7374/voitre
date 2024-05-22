@@ -190,8 +190,47 @@ async function sample5() {
 }
 
 // getByteTimeDomainDataを50ms?とかごとに呼び出して、非連続のスナップショットデータとして持つ案
-function sample6() {
-    // TODO
+async function sample6() {
+    if (!_audioStream) {
+        _audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
+
+    if (!_audioCtx) {
+        _audioCtx = new AudioContext();
+    }
+
+    const source = _audioCtx.createMediaStreamSource(_audioStream);
+
+    const analyser = _audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Float32Array(bufferLength);
+    source.connect(analyser);
+
+    // [{time, db, fft?}
+    const timesliceData = []
+    const time0 = Date.now()
+
+    function upd() {
+        analyser.getFloatTimeDomainData(dataArray);
+        const time = Date.now() - time0
+
+        const rms = calcRMS(dataArray)
+        const dB = Math.round(rmsTodB(rms))
+        timesliceData.push({
+            time, rms, dB
+        })
+    }
+    function updAndOut() {
+        upd();
+        const dd = timesliceData[timesliceData.length - 1]
+        console.log(dd.time, ":", dd.dB,)
+    }
+    var si = setInterval(updAndOut, 50)
+
+    _CONTEXT.upd = upd;
+    _CONTEXT.timesliceData = timesliceData;
+    _CONTEXT.si = si;
 }
 
 function calcRMS(channelData) {
