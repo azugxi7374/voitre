@@ -2,7 +2,7 @@ const GlobalOptions = {
     SamplingInterval: 50,
 }
 
-main();
+// main();
 
 async function main() {
     // init
