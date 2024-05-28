@@ -234,13 +234,14 @@ async function sample6() {
 }
 // https://developer.mozilla.org/ja/docs/Web/API/AnalyserNode/getFloatFrequencyData
 async function sample7() {
-    const audioCtx = new AudioContext();
+    const audioCtx = new AudioContext({ sampleRate: 8000 });
+
     const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const audioSourceNode = audioCtx.createMediaStreamSource(audioStream);
 
     //Create analyser node
     const analyserNode = audioCtx.createAnalyser();
-    analyserNode.fftSize = 256;
+    analyserNode.fftSize = 4096// 256;
     const bufferLength = analyserNode.frequencyBinCount;
     const dataArray = new Float32Array(bufferLength);
 
@@ -292,6 +293,11 @@ async function sample7() {
 
     draw();
 }
+
+// freq
+// function freq(i){return (i+1)*sampleRate/2/da.length}
+// ↓ db合成
+// 10 * Math.log10(da.reduce((sum,v)=> sum + Math.pow(10, v/10), 0))
 
 function calcRMS(channelData) {
     let sum = 0;
