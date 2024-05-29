@@ -299,6 +299,10 @@ async function sample7() {
 // ↓ db合成
 // 10 * Math.log10(da.reduce((sum,v)=> sum + Math.pow(10, v/10), 0))
 
+// 音階計算。Aからの相対cent
+// function calcScale(h){ const l = Math.log2(h/440); const normL = l-Math.floor(l); return normL*12}
+
+
 function calcRMS(channelData) {
     let sum = 0;
     for (let i = 0; i < channelData.length; i++) {
