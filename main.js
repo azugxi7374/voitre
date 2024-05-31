@@ -1,5 +1,5 @@
 const GlobalOptions = {
-    SamplingInterval: 50,
+    SamplingInterval: 200,
 }
 
 // main();
@@ -13,7 +13,7 @@ async function main() {
     const timesliceData = []
 
     function mainLoop() {
-        timesliceData.push(sampling(analyser, dataArray));
+        timesliceData.push(sampling(analyser, dataArray, audioCtx));
         draw(timesliceData);
     }
 
@@ -24,24 +24,43 @@ async function main() {
 
 async function init() {
     const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const audioCtx = new AudioContext();
+    // const audioCtx = new AudioContext();
+    const audioCtx = new AudioContext({ sampleRate: 8000 });
     const source = audioCtx.createMediaStreamSource(audioStream);
     const analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 2048;
+    // analyser.fftSize = 2048;
+    analyser.fftSize = 4096// 256;
     source.connect(analyser);
 
     return { audioStream, audioCtx, analyser }
 }
 
-function sampling(analyser, dataArray) {
-    analyser.getFloatTimeDomainData(dataArray);
+function sampling(analyser, dataArray, audioCtx) {
+    // analyser.getFloatTimeDomainData(dataArray);
+    analyser.getFloatFrequencyData(dataArray);
     const time = Date.now()
 
-    const rms = calcRMS(dataArray)
-    const dB = Math.round(rmsTodB(rms))
+    // const rms = calcRMS(dataArray)
+    // const dB = Math.round(rmsTodB(rms))
+    const dB = sumOfDecibel(...dataArray)
+    const maxIndex = calcMaxIndex(dataArray, (a, b) => a > b).maxI
+    const freq = fftIndexToFreq(audioCtx.sampleRate, dataArray.length, maxIndex)
+    const scale = hzToNormScale(freq)
     return {
-        time, rms, dB
+        time, dB, freq, scale
     }
+}
+
+function calcMaxIndex(arr, leftIsMax) {
+    let maxI = 0
+    let maxV = arr[0]
+    arr.forEach((_, i) => {
+        if (leftIsMax(arr[i], maxV)) {
+            maxI = i;
+            maxV = arr[i];
+        }
+    })
+    return { maxI, maxV }
 }
 
 function draw(timesliceData) {
@@ -49,6 +68,21 @@ function draw(timesliceData) {
 }
 
 
+function fftIndexToFreq(sampleRate, dataLength, i) {
+    // console.log(sampleRate, dataLength, i)
+    return (i + 1) * sampleRate / 2 / dataLength
+}
+// ↓ db合成
+function sumOfDecibel(...arr) {
+    return 10 * Math.log10(arr.reduce((sum, v) => sum + Math.pow(10, v / 10), 0))
+}
+
+// 音階計算。Aからの相対音階
+function hzToNormScale(hz) {
+    const l = Math.log2(hz / 440);
+    const normL = l - Math.floor(l);
+    return normL * 12
+}
 
 
 function calcRMS(channelData) {
