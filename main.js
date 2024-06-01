@@ -1,20 +1,21 @@
 const GlobalOptions = {
     SamplingInterval: 200,
+    elemId: "content"
 }
 
 // main();
 
 async function main() {
     // init
-    const { audioStream, audioCtx, analyser } =
-        await init();
+    const { audioStream, audioCtx, analyser } = await init();
+
 
     const dataArray = new Float32Array(analyser.frequencyBinCount)
     const timesliceData = []
 
     function mainLoop() {
         timesliceData.push(sampling(analyser, dataArray, audioCtx));
-        draw(timesliceData);
+        draw(timesliceData, document.querySelector(".content"));
     }
 
     const si = setInterval(mainLoop, GlobalOptions.SamplingInterval
@@ -47,7 +48,7 @@ function sampling(analyser, dataArray, audioCtx) {
     const freq = fftIndexToFreq(audioCtx.sampleRate, dataArray.length, maxIndex)
     const scale = hzToNormScale(freq)
     return {
-        time, dB, freq, scale
+        time, dB, freq, scale,
     }
 }
 
@@ -63,8 +64,13 @@ function calcMaxIndex(arr, leftIsMax) {
     return { maxI, maxV }
 }
 
-function draw(timesliceData) {
-    console.log(timesliceData[timesliceData.length - 1]);
+function draw(timesliceData, elem) {
+    // if (timesliceData.length > 1) { console.log(timesliceData[timesliceData.length - 1].time - timesliceData[timesliceData.length - 2].time) }
+    const obj = timesliceData[timesliceData.length - 1];
+    console.log(obj)
+
+    elem.textContent = `${JSON.stringify(obj)}`
+
 }
 
 
