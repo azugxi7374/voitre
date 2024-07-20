@@ -1,3 +1,5 @@
+import { createApp, } from 'vue'
+
 const GlobalOptions = {
     SamplingInterval: 200,
     elemId: "content"
