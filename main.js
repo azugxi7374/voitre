@@ -1,8 +1,11 @@
 import { createApp, } from 'vue'
 
 const GlobalOptions = {
-    SamplingInterval: 200,
-    elemId: "content"
+    SAMPLING_INTERVAL: 200,
+    MAX_TILESLICE_LEN: 100,
+    ELEM_ID: "content",
+    SAMPLE_RATE: 8000,
+    FFT_SIZE: 4096,
 }
 
 // main();
@@ -17,10 +20,13 @@ async function main() {
 
     function mainLoop() {
         timesliceData.push(sampling(analyser, dataArray, audioCtx));
-        draw(timesliceData, document.querySelector(".content"));
+        while (timesliceData.length > GlobalOptions.MAX_TILESLICE_LEN) {
+            timesliceData.shift();
+        }
+        draw(timesliceData, document.querySelector(GlobalOptions.ELEM_ID));
     }
 
-    const si = setInterval(mainLoop, GlobalOptions.SamplingInterval
+    const si = setInterval(mainLoop, GlobalOptions.SAMPLING_INTERVAL
     )
 }
 
@@ -28,11 +34,11 @@ async function main() {
 async function init() {
     const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     // const audioCtx = new AudioContext();
-    const audioCtx = new AudioContext({ sampleRate: 8000 });
+    const audioCtx = new AudioContext({ sampleRate: GlobalOptions.SAMPLE_RATE });
     const source = audioCtx.createMediaStreamSource(audioStream);
     const analyser = audioCtx.createAnalyser();
     // analyser.fftSize = 2048;
-    analyser.fftSize = 4096// 256;
+    analyser.fftSize = GlobalOptions.FFT_SIZE// 256;
     source.connect(analyser);
 
     return { audioStream, audioCtx, analyser }
