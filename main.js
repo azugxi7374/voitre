@@ -110,3 +110,14 @@ function rmsTodB(rms) {
     return 20 * Math.log10(rms);
 }
 
+function calcDBStat(timesliceData) {
+    // TODO
+    const dbTimeSlice = []
+    const avg = dbTimeSlice.reduce((sum, x) => sum + x, 0) / dbTimeSlice.length
+    let v = 0;
+    if (timesliceData.length > 0) {
+        v = dbTimeSlice.reduce((sum2, x) => sum2 + (x - avg) * (x - avg)) / (dbTimeSlice.length - 1)
+    }
+    return [avg, v]
+}
+
