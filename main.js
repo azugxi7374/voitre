@@ -1,15 +1,16 @@
 import { createApp, } from 'vue'
+import { draw } from './draw.js'
 
 const GlobalOptions = {
     SAMPLING_INTERVAL: 200,
     MAX_TILESLICE_LEN: 100,
-    ELEM_ID: "content",
+    ELEM_CLASS: "content",
     SAMPLE_RATE: 8000,
     FFT_SIZE: 4096,
 }
 
 // main();
-
+window._g = { main }
 async function main() {
     // init
     const { audioStream, audioCtx, analyser } = await init();
@@ -23,7 +24,7 @@ async function main() {
         while (timesliceData.length > GlobalOptions.MAX_TILESLICE_LEN) {
             timesliceData.shift();
         }
-        draw(timesliceData, document.querySelector(GlobalOptions.ELEM_ID));
+        draw(timesliceData, document.querySelector("." + GlobalOptions.ELEM_CLASS));
     }
 
     const si = setInterval(mainLoop, GlobalOptions.SAMPLING_INTERVAL
@@ -72,15 +73,6 @@ function calcMaxIndex(arr, leftIsMax) {
     return { maxI, maxV }
 }
 
-function draw(timesliceData, elem) {
-    // if (timesliceData.length > 1) { console.log(timesliceData[timesliceData.length - 1].time - timesliceData[timesliceData.length - 2].time) }
-    const obj = timesliceData[timesliceData.length - 1];
-    console.log(obj)
-
-    elem.textContent = `${JSON.stringify(obj)}`
-
-}
-
 
 function fftIndexToFreq(sampleRate, dataLength, i) {
     // console.log(sampleRate, dataLength, i)
@@ -110,12 +102,10 @@ function rmsTodB(rms) {
     return 20 * Math.log10(rms);
 }
 
-function calcDBStat(timesliceData) {
-    // TODO
-    const dbTimeSlice = []
+function calcDBStat(dbTimeSlice) {
     const avg = dbTimeSlice.reduce((sum, x) => sum + x, 0) / dbTimeSlice.length
     let v = 0;
-    if (timesliceData.length > 0) {
+    if (dbTimeSlice.length > 0) {
         v = dbTimeSlice.reduce((sum2, x) => sum2 + (x - avg) * (x - avg)) / (dbTimeSlice.length - 1)
     }
     return [avg, v]
